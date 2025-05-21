@@ -1,10 +1,13 @@
 import express, { Request, Response } from "express";
 import router from "./routes/api"
+import bodyParser from "body-parser";
 
 const app = express();
 const PORT = 3000;
 
 
+
+app.use(bodyParser.json()) // parse json
 // semua route yang ada prefix /auth diarahin ke file router
 app.use('/auth', router)
 // tampilin ini kalau akses ke localhost:3000
