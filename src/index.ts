@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import router from "./routes/api";
+import authRouter from "./routes/auth";
 import bodyParser from "body-parser";
 import connectDb from "./utils/database";
 import cors from "cors";
@@ -15,8 +15,9 @@ async function init() {
   // middleware
   app.use(bodyParser.json()); // parse json
   app.use(cors()); // enable cors
-  // semua route yang ada prefix /auth diarahin ke file router
-  app.use("/auth", router);
+  // semua route yang ada prefix /auth diarahin ke file authrouter
+  app.use("/auth", authRouter);
+
   // tampilin ini kalau akses ke localhost:3000
   app.get("/", (req: Request, res: Response) => {
     res.status(200).json({

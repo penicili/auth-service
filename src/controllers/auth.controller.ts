@@ -37,7 +37,7 @@ const registerValidationSchema = Yup.object({
     .oneOf([Yup.ref("password")], "Passwords must match"),
 });
 
-export default {
+export const authController = {
   // controller untuk register
   async register(req: Request, res: Response) {
     // destructure body dari request
@@ -73,6 +73,47 @@ export default {
         data: null,
       });
       return;
+    }
+  },
+
+  async login(req: Request, res: Response) {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res
+        .status(400)
+        .json({ message: "Username and password are required", data: null });
+    }
+    try {
+      // Cari user berdasarkan username
+      const user = await UserModel.findOne({ username });
+      if (!user) {
+        return res
+          .status(401)
+          .json({ message: "Invalid username or password", data: null });
+      }
+      // Cek password
+      const { encrypt } = await import("../utils/encrypt");
+      const encryptedPassword = encrypt(password);
+      if (user.password !== encryptedPassword) {
+        return res
+          .status(401)
+          .json({ message: "Invalid username or password", data: null });
+      }
+      // Generate JWT
+      const { SECRET } = await import("../utils/env");
+      const jwt = await import("jsonwebtoken");
+      const token = jwt.sign(
+        { username: user.username, email: user.email },
+        SECRET,
+        { expiresIn: "1d" }
+      );
+      return res.status(200).json({
+        message: "Login success",
+        data: { token },
+      });
+    } catch (error) {
+      const err = error as unknown as Error;
+      return res.status(500).json({ message: err.message, data: null });
     }
   },
 };
