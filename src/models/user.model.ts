@@ -37,7 +37,7 @@ const UserSchema = new Schema<User>(
         role: {
             type: Schema.Types.String,
             required: true,
-            enum: ["admin", "driver", "manager"],
+            enum: ["admin", "pengemudi", "manager"],
             default: "user",
         },profilePicture: {
             type: Schema.Types.String,

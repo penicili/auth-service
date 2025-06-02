@@ -77,19 +77,24 @@ export const authController = {
   },
 
   async login(req: Request, res: Response) {
-    const { username, password } = req.body;
-    if (!username || !password) {
+    const { userIdentifier, password } = req.body;
+    if (!userIdentifier || !password) {
       return res
         .status(400)
-        .json({ message: "Username and password are required", data: null });
+        .json({ message: "User identifier and password are required", data: null });
     }
     try {
-      // Cari user berdasarkan username
-      const user = await UserModel.findOne({ username });
+      // Cari user berdasarkan username atau email
+      const user = await UserModel.findOne({
+        $or: [
+          { username: userIdentifier },
+          { email: userIdentifier }
+        ]
+      });
       if (!user) {
         return res
           .status(401)
-          .json({ message: "Invalid username or password", data: null });
+          .json({ message: "Invalid username/email or password", data: null });
       }
       // Cek password
       const { encrypt } = await import("../utils/encrypt");
@@ -97,7 +102,7 @@ export const authController = {
       if (user.password !== encryptedPassword) {
         return res
           .status(401)
-          .json({ message: "Invalid username or password", data: null });
+          .json({ message: "Invalid username/email or password", data: null });
       }
       // Generate JWT
       const { SECRET } = await import("../utils/env");
