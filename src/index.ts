@@ -14,7 +14,9 @@ async function init() {
   const app = express();
   // middleware
   app.use(bodyParser.json()); // parse json
-  app.use(cors()); // enable cors
+  app.use(cors({
+    origin: "*", // allow all origins, you can specify specific origins if needed
+  })); // enable cors
   // semua route yang ada prefix /auth diarahin ke file authrouter
   app.use("/auth", authRouter);
 

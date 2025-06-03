@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import * as Yup from "yup";
 import UserModel from "../models/user.model";
+import { encrypt } from "../utils/encrypt";
+import jwt from "jsonwebtoken";
 
 // type definition
 // type untuk request body register
@@ -97,7 +99,6 @@ export const authController = {
           .json({ message: "Invalid username/email or password", data: null });
       }
       // Cek password
-      const { encrypt } = await import("../utils/encrypt");
       const encryptedPassword = encrypt(password);
       if (user.password !== encryptedPassword) {
         return res
@@ -106,9 +107,8 @@ export const authController = {
       }
       // Generate JWT
       const { SECRET } = await import("../utils/env");
-      const jwt = await import("jsonwebtoken");
       const token = jwt.sign(
-        { username: user.username, email: user.email },
+        { username: user.username, email: user.email, role: user.role },
         SECRET,
         { expiresIn: "1d" }
       );
