@@ -42,6 +42,13 @@ const registerValidationSchema = Yup.object({
 export const authController = {
   // controller untuk register
   async register(req: Request, res: Response) {
+    /** 
+      #swagger.tags = ['Auth']
+      #swagger.requestBody = {
+        required: true,
+        schema: {$ref: "#/components/schemas/RegisterRequest"}}
+     */
+
     // destructure body dari request
     const { fullName, email, username, role, password, confirmPassword } =
       req.body as TRegisterRequest;
@@ -79,6 +86,13 @@ export const authController = {
   },
 
   async login(req: Request, res: Response) {
+
+    /**
+      #swagger.tags = ['Auth']
+      #swagger.requestBody = {
+        required: true,
+        schema: {$ref: "#/components/schemas/LoginRequest"}}
+     */
     const { userIdentifier, password } = req.body;
     if (!userIdentifier || !password) {
       return res
