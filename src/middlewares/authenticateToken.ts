@@ -14,6 +14,7 @@ declare global {
   namespace Express {
     interface Request {
       user?: DecryptedToken;
+      // Add other fields if needed
     }
   }
 }
