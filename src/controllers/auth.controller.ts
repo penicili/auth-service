@@ -3,6 +3,7 @@ import * as Yup from "yup";
 import UserModel from "../models/user.model";
 import { encrypt } from "../utils/encrypt";
 import jwt from "jsonwebtoken";
+import axios, { all } from "axios";
 
 // type definition
 // type untuk request body register
