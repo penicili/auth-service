@@ -2,7 +2,7 @@ import swaggerAutogen from "swagger-autogen";
 
 // Use absolute paths to avoid relative path issues
 const outputFile = "./swagger_output.json";
-const endpointsFiles = ["../routes/auth.ts"];
+const endpointsFiles = ["../routes/auth.ts", "../routes/api.ts"];
 
 const doc = {
   info: {
@@ -13,7 +13,11 @@ const doc = {
   servers: [
     {
       url: "http://localhost:3001/auth",
-      description: "Local Development Server",
+      description: "Auth Endpoints",
+    },
+    {
+      url: "http://localhost:3001/api",
+      description: "Gateway Endpoints",
     },
   ],
   tags: [
@@ -21,6 +25,18 @@ const doc = {
       name: "Auth",
       description: "Authentication endpoints",
     },
+    {
+      name: "Gateway - Vehicle Service",
+      description: "endpoints ke vehicle service"
+    },
+    {
+      name: "Gateway - Driver Service",
+      description: "endpoints ke driver service"
+    },
+    {
+      name: "Gateway - Route Service",
+      description: "endpoints ke route service"
+    }
   ],
   components: {
     securitySchemes: {
@@ -42,6 +58,16 @@ const doc = {
         password: "Hahahihi123",
         confirmPassword: "Hahahihi123",
       },
+      CreateVehicleSchema: {
+        type: "car",
+        plate_number: "B 6924 ZY",
+        status: "Available",
+      },
+      UpdateVehicleSchema: {
+        type: "car",
+        plate_number: "B 6924 ZY",
+        status: "InUse",
+      }
     },
   },
 };

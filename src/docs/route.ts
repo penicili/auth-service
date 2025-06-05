@@ -8,7 +8,7 @@ import path from "path";                       // Modul path untuk menangani jal
 // Mengekspor fungsi docs yang menerima parameter app bertipe Express
 export default function docs(app: Express) {
   app.use(
-    "/api/docs",                               // Rute dimana Swagger UI akan ditampilkan
+    "/docs",                               // Rute dimana Swagger UI akan ditampilkan
     swaggerUi.serve,                          // Menyajikan aset-aset Swagger UI
     swaggerUi.setup(swaggerOutput, {          // Mengatur Swagger UI dengan dokumentasi kita
       customCss: fs.readFileSync(             // Membaca file CSS secara synchronous

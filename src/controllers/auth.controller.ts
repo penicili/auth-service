@@ -45,6 +45,7 @@ export const authController = {
   async register(req: Request, res: Response) {
     /** 
       #swagger.tags = ['Auth']
+      #swagger.summary = 'Registrasi User'
       #swagger.requestBody = {
         required: true,
         schema: {$ref: "#/components/schemas/RegisterRequest"}}
@@ -90,6 +91,7 @@ export const authController = {
 
     /**
       #swagger.tags = ['Auth']
+      #swagger.summary = 'Login User'
       #swagger.requestBody = {
         required: true,
         schema: {$ref: "#/components/schemas/LoginRequest"}}
