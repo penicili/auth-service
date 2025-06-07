@@ -45,10 +45,13 @@ const doc = {
         scheme: "bearer",
       },
     },
-    schemas: {
-      LoginRequest: {
+    schemas: {      LoginRequest: {
         userIdentifier: "jakaCrossOrigin",
         password: "Hahahihi123",
+      },
+      LoginManagerRequest: {
+        userIdentifier: "fleetmanager", // Use this for testing manager login
+        password: "Pass123"
       },
       RegisterRequest: {
         fullName: "Joko Tromol Depan",
@@ -62,11 +65,16 @@ const doc = {
         type: "car",
         plate_number: "B 6924 ZY",
         status: "Available",
-      },
-      UpdateVehicleSchema: {
+      },      UpdateVehicleSchema: {
         type: "car",
         plate_number: "B 6924 ZY",
         status: "InUse",
+      },
+      CreateDriverSchema: {
+        name: "John Driver",
+        email: "driver@example.com",
+        license_number: "SIM123456789",
+        status: "Available"
       }
     },
   },

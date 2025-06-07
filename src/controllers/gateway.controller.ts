@@ -1,30 +1,13 @@
-import jwt from "jsonwebtoken";
-import { SECRET } from "../utils/env";
 import { Request, Response } from "express";
 import UserModel from "../models/user.model";
 import axios from "axios";
-import { VEHICLE_SERVICE_URL } from "../utils/env";
+import { VEHICLE_SERVICE_URL, DRIVER_SERVICE_URL } from "../utils/env";
 
 // import types untuk request body and response
-import { 
-    createVehicleRequest, 
-} from "../types/vehicleService.types";
+import { createVehicleRequest } from "../types/vehicleService.types";
+import { createDriverRequest } from "../types/driverService.types";
 
-interface DecryptedToken {
-    username: string;
-    email: string;
-    role: string;
-    exp: number;
-}
 
-// Extend Express Request type to include user property
-declare global {
-  namespace Express {
-    interface Request {
-      user?: DecryptedToken;
-    }
-  }
-}
 
 export const gatewayController = {
     //  Vehicle Service Gateway Methods
@@ -198,7 +181,7 @@ export const gatewayController = {
 
     async getDrivers(req: Request, res: Response) {
         try {
-            const serviceResponse = await axios.get(`${VEHICLE_SERVICE_URL}/drivers`)
+            const serviceResponse = await axios.get(`${DRIVER_SERVICE_URL}/drivers/`)
             const response = serviceResponse.data;
             return res.status(200).json({
                 message: "Drivers fetched successfully",
@@ -212,9 +195,242 @@ export const gatewayController = {
             });
             
         }
-    },
+    },    
     async createDriver(req: Request, res: Response) {
-
+    /** 
+      #swagger.tags = ['Gateway - Driver Service']
+      #swagger.summary = 'Create driver and automatically register user account'
+      #swagger.requestBody = {
+        required: true,
+        schema: {$ref: "#/components/schemas/CreateDriverSchema"}}
+      #swagger.security =[{
+        "bearerAuth":[]}]
+     */        try {            // First create the driver in the driver service
+            // Extract only the fields we know the driver service needs
+            const driverData: createDriverRequest = {
+                name: req.body.name,
+                email: req.body.email,
+                license_number: req.body.license_number,
+                status: req.body.status || 'available' 
+            };
+            
+            // Log request data for debugging
+            console.log("Creating driver with data:", JSON.stringify(driverData));
+            
+            const serviceResponse = await axios.post(`${DRIVER_SERVICE_URL}/drivers`, driverData);
+            const driverResponse = serviceResponse.data;
+            
+            // Now create a user account for the driver
+            try {
+                // Create a username from driver name (simplified for example)
+                const username = driverData.name.toLowerCase().replace(/\s+/g, '_') || 
+                                driverData.email.split('@')[0];
+                                  // Create user in auth service
+                // We need to only include fields that are in the User model
+                const userData = {
+                    fullName: driverData.name,
+                    email: driverData.email,
+                    username: username,
+                    role: "pengemudi", 
+                    password: driverData.license_number // The model handles password encryption
+                };
+                
+                console.log("Creating user account with data:", {
+                    fullName: userData.fullName,
+                    email: userData.email,
+                    username: userData.username,
+                    role: userData.role
+                });
+                
+                const user = await UserModel.create(userData);
+                
+                console.log(`User account automatically created for driver: ${driverData.name}`, {
+                    username: username,
+                    driverId: driverResponse.data.id
+                });
+                
+                return res.status(201).json({
+                    message: "Driver created successfully with user account",
+                    data: {
+                        driver: driverResponse.data,
+                        user: {
+                            username: user.username,
+                            email: user.email,
+                            role: user.role
+                        }
+                    }
+                });            } catch (userError: any) {
+                console.error("Error creating user for driver:", userError.message);
+                
+                // Log validation errors if they exist
+                if (userError.errors) {
+                    console.error("Validation errors:", userError.errors);
+                }
+                
+                // If it's a duplicate key error (username or email already exists)
+                if (userError.code === 11000) {
+                    console.error("Duplicate key error:", userError.keyValue);
+                    return res.status(207).json({
+                        message: "Driver created but user account creation failed - duplicate email or username",
+                        data: {
+                            driver: driverResponse.data,
+                            userError: "A user with this email or username already exists"
+                        }
+                    });
+                }
+                
+                // Return partial success - driver created but user account failed
+                return res.status(207).json({
+                    message: "Driver created but user account creation failed",
+                    data: {
+                        driver: driverResponse.data,
+                        userError: userError.message
+                    }
+                });
+            }        } catch (error: any) {
+            console.error("Error creating driver:", error.message);
+            
+            // Log more detailed error information
+            if (error.response) {
+                console.error("Driver service error details:", {
+                    status: error.response.status,
+                    data: error.response.data,
+                    headers: error.response.headers
+                });
+                
+                // Return the actual error from the driver service
+                return res.status(error.response.status).json({
+                    message: "Failed to create driver",
+                    errorDetails: error.response.data,
+                    error: error.message
+                });
+            }
+            
+            return res.status(500).json({
+                message: "Failed to create driver", 
+                error: error.message
+            });
+        }
+    },
+    async assignDriver(req: Request, res: Response){
+        try {
+            const serviceResponse = await axios.post(`${DRIVER_SERVICE_URL}/drivers/assign`, req.body,)
+            const response = serviceResponse.data;
+            console.log("Assigning driver with data:", JSON.stringify(req.body));
+            return res.status(200).json({
+                message: "Driver assigned successfully",
+                data: response.data
+            });
+        } catch (error: any) {
+            console.error("Error assigning driver:", error);
+            return res.status(500).json({
+                message: "Failed to assign driver",
+                data: null,
+            });
+            
+        }
+    },
+    async getDriverById(req: Request, res: Response) {
+        try {
+            const serviceResponse = await axios.get(`${DRIVER_SERVICE_URL}/drivers/${req.query.id}`);
+            const response = serviceResponse.data;
+            return res.status(200).json({
+                message: "Driver fetched successfully",
+                data: response.data
+            });
+        } catch (error: any) {
+            console.error("Error fetching driver by ID:", error);
+            return res.status(500).json({
+                message: "Failed to fetch driver",
+                data: null,
+            });
+            
+        }
+    },    
+    async deleteDriverById(req: Request, res: Response) {
+    /** 
+      #swagger.tags = ['Gateway - Driver Service']
+      #swagger.summary = 'Delete driver by ID and remove associated user account'
+      #swagger.parameters['id'] = {
+      in: 'query',
+      description: 'Driver ID to delete',
+      required: true,
+      type: 'string'}
+      #swagger.security =[{
+        "bearerAuth":[]}]
+     */
+        const driverId = req.query.id as string;
+        
+        if (!driverId) {
+            return res.status(400).json({
+                message: "Driver ID is required",
+                data: null,
+            });
+        }
+        
+        try {
+            // First, get the driver details to find the email for user account deletion
+            const driverResponse = await axios.get(`${DRIVER_SERVICE_URL}/drivers/${driverId}`);
+            const driverData = driverResponse.data.data;
+            
+            // Save email to find associated user account
+            const driverEmail = driverData.email;
+            
+            // Delete the driver from the driver service
+            const serviceResponse = await axios.delete(`${DRIVER_SERVICE_URL}/drivers/${driverId}`);
+            
+            // Now find and delete the associated user account
+            try {
+                // Find user by email from driver data
+                const user = await UserModel.findOne({ email: driverEmail });
+                
+                if (user) {
+                    console.log(`Deleting user account for driver with email: ${driverEmail}`);
+                    await UserModel.deleteOne({ email: driverEmail });
+                    
+                    return res.status(200).json({
+                        message: "Driver and associated user account deleted successfully",
+                        data: null
+                    });
+                } else {
+                    console.log(`No user account found for driver with email: ${driverEmail}`);
+                    return res.status(200).json({
+                        message: "Driver deleted successfully, but no associated user account was found",
+                        data: null
+                    });
+                }
+            } catch (userError: any) {
+                console.error("Error deleting user account:", userError.message);
+                
+                // Driver was deleted but user account deletion failed
+                return res.status(207).json({
+                    message: "Driver deleted but user account deletion failed",
+                    error: userError.message
+                });
+            }
+        } catch (error: any) {
+            console.error("Error deleting driver:", error.message);
+            
+            // More detailed error logging
+            if (error.response) {
+                console.error("Driver service error details:", {
+                    status: error.response.status,
+                    data: error.response.data
+                });
+                
+                return res.status(error.response.status).json({
+                    message: "Failed to delete driver",
+                    errorDetails: error.response.data,
+                    error: error.message
+                });
+            }
+            
+            return res.status(500).json({
+                message: "Failed to delete driver",
+                data: null,
+                error: error.message
+            });
+        }
     }
     // Route Service Gateway Methods
 };
