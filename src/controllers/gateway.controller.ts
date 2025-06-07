@@ -192,9 +192,29 @@ export const gatewayController = {
             });
             
         }
-    }
+    },
 
     // Driver Service Gateway Methods
 
+    async getDrivers(req: Request, res: Response) {
+        try {
+            const serviceResponse = await axios.get(`${VEHICLE_SERVICE_URL}/drivers`)
+            const response = serviceResponse.data;
+            return res.status(200).json({
+                message: "Drivers fetched successfully",
+                data: response.data
+            });
+        } catch (error: any) {
+            console.error("Error fetching drivers:", error);
+            return res.status(500).json({
+                message: "Driver Service is unavailable",
+                data: null,
+            });
+            
+        }
+    },
+    async createDriver(req: Request, res: Response) {
+
+    }
     // Route Service Gateway Methods
 };

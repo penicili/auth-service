@@ -24,7 +24,7 @@ async function init() {
   app.use("/api", apiRouter); // semua route yang ada prefix /api diarahin ke file apirouter
   docs(app); // inisialisasi docs
 
-  // tampilin ini kalau akses ke localhost:3000
+  // tampilin ini kalau akses ke localhost:3001
   app.get("/", (req: Request, res: Response) => {
     res.status(200).json({
       message:
