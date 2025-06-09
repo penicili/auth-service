@@ -2,7 +2,7 @@
 FROM node:22
 
 # set workdir
-WORKDIR /app
+WORKDIR /app/auth
 
 # copy package files
 COPY package*.json ./
