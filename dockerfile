@@ -20,4 +20,5 @@ COPY .env .env
 EXPOSE 3001
 
 # start app
+RUN ["npm", "run", "docs"]
 CMD ["npm", "run", "dev"]
