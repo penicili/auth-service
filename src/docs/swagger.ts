@@ -1,8 +1,12 @@
 import swaggerAutogen from "swagger-autogen";
+import path from "path";
 
-// Use absolute paths to avoid relative path issues
-const outputFile = "./swagger_output.json";
-const endpointsFiles = ["../routes/auth.ts", "../routes/api.ts"];
+// Make sure to output to the same directory as this file
+const outputFile = path.resolve(__dirname, "swagger_output.json");
+const endpointsFiles = [
+  path.resolve(__dirname, "../routes/auth.ts"), 
+  path.resolve(__dirname, "../routes/api.ts")
+];
 
 const doc = {
   info: {
@@ -69,25 +73,30 @@ const doc = {
         type: "car",
         plate_number: "B 6924 ZY",
         status: "InUse",
-      },
-      CreateDriverSchema: {
+      },      CreateDriverSchema: {
         name: "John Driver",
         email: "driver@example.com",
         license_number: "SIM123456789",
         status: "Available"
+      },
+      CreateRouteSchema: {
+        driver_id: 1,
+        vehicle_id: 1,
+        start_location: "Jakarta",
+        end_location: "Bandung",
+        start_time: "2025-06-08T08:00:00Z",
+        notes: "Express delivery"
+      },
+      UpdateRouteStatusSchema: {
+        status: "InProgress"
       }
     },
   },
 };
 
-const swaggerDoc = swaggerAutogen({
+// Use the simpler invocation pattern that works in your other project
+swaggerAutogen({
   openapi: "3.0.0",
-  autoHeaders: true,
-  autoQuery: true,
-  autoBody: true,
-});
-
-// Generate swagger JSON file
-swaggerDoc(outputFile, endpointsFiles, doc).then(() => {
+})(outputFile, endpointsFiles, doc).then(() => {
   console.log("Swagger documentation generated successfully");
 });

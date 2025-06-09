@@ -1,17 +1,19 @@
 import { Request, Response } from "express";
 import UserModel from "../models/user.model";
 import axios from "axios";
-import { VEHICLE_SERVICE_URL, DRIVER_SERVICE_URL } from "../utils/env";
+import { VEHICLE_SERVICE_URL, DRIVER_SERVICE_URL, ROUTE_SERVICE_URL } from "../utils/env";
 
 // import types untuk request body and response
 import { createVehicleRequest } from "../types/vehicleService.types";
 import { createDriverRequest } from "../types/driverService.types";
+import { CreateRouteRequest, UpdateRouteStatusRequest } from "../types/routeService.types";
 
 
 
 export const gatewayController = {
     //  Vehicle Service Gateway Methods
     async getVehicles(req: Request, res: Response) {
+        console.log('Fetching all vehicles from vehicle service');
     /** 
       #swagger.tags = ['Gateway - Vehicle Service']
       #swagger.summary = 'Get all vehicles'
@@ -28,9 +30,10 @@ export const gatewayController = {
             }
             );
         } catch (error: any) { // Add type annotation to error
+            console.log("Error fetching vehicles:", error.message);
             console.error("Error fetching vehicles:");
             return res.status(404).json({
-                message: "Vehicle Service in unavailable",
+                message: error.message || "Vehicle Service is unavailable",
             })
         }
     },
@@ -430,7 +433,207 @@ export const gatewayController = {
                 data: null,
                 error: error.message
             });
+        }    },
+    
+    // Route Service Gateway Methods
+    async getActiveRoutes(req: Request, res: Response) {
+    /** 
+      #swagger.tags = ['Gateway - Route Service']
+      #swagger.summary = 'Get all active routes'
+      #swagger.security = [{
+        "bearerAuth":[]
+      }]
+     */
+        try {
+            console.log("Fetching active routes from route service");
+            const serviceResponse = await axios.get(`${ROUTE_SERVICE_URL}/routes/active`);
+            const response = serviceResponse.data;
+            
+            return res.status(200).json({
+                message: "Active routes fetched successfully",
+                data: response.data
+            });
+        } catch (error: any) {
+            console.error("Error fetching active routes:", error.message);
+            
+            if (error.response) {
+                console.error("Route service error details:", {
+                    status: error.response.status,
+                    data: error.response.data
+                });
+                
+                return res.status(error.response.status).json({
+                    message: "Failed to fetch active routes",
+                    errorDetails: error.response.data
+                });
+            }
+            
+            return res.status(500).json({
+                message: "Route Service is unavailable",
+                data: null
+            });
+        }
+    },
+    
+    async getRouteById(req: Request, res: Response) {
+        const routeId = req.query.id as string;
+        
+        if (!routeId) {
+            return res.status(400).json({
+                message: "Route ID is required",
+                data: null
+            });
+        }
+        
+        try {
+            console.log(`Fetching route with ID: ${routeId}`);
+            const serviceResponse = await axios.get(`${ROUTE_SERVICE_URL}/routes/${routeId}`);
+            const response = serviceResponse.data;
+            
+            return res.status(200).json({
+                message: "Route fetched successfully",
+                data: response.data
+            });
+        } catch (error: any) {
+            console.error(`Error fetching route with ID ${routeId}:`, error.message);
+            
+            if (error.response) {
+                // If the route service returned an error response
+                return res.status(error.response.status).json({
+                    message: error.response.data.error || "Failed to fetch route",
+                    errorDetails: error.response.data
+                });
+            }
+            
+            return res.status(500).json({
+                message: "Failed to fetch route",
+                data: null
+            });
+        }
+    },
+    
+    async createRoute(req: Request, res: Response) {
+    /** 
+      #swagger.tags = ['Gateway - Route Service']
+      #swagger.summary = 'Create a new route'
+      #swagger.requestBody = {
+        required: true,
+        schema: {$ref: "#/components/schemas/CreateRouteSchema"}
+      }
+      #swagger.security = [{
+        "bearerAuth":[]
+      }]
+     */
+        try {
+            // Extract only the fields we need for the route service
+            const routeData: CreateRouteRequest = {
+                driver_id: req.body.driver_id,
+                vehicle_id: req.body.vehicle_id,
+                start_location: req.body.start_location,
+                end_location: req.body.end_location,
+                start_time: req.body.start_time,
+                notes: req.body.notes
+            };
+            
+            console.log("Creating route with data:", JSON.stringify(routeData));
+            
+            const serviceResponse = await axios.post(`${ROUTE_SERVICE_URL}/routes`, routeData);
+            const response = serviceResponse.data;
+            
+            return res.status(201).json({
+                message: "Route created successfully",
+                data: response.data
+            });
+        } catch (error: any) {
+            console.error("Error creating route:", error.message);
+            
+            if (error.response) {
+                // Handle specific error responses from the route service
+                if (error.response.status === 404) {
+                    return res.status(404).json({
+                        message: "Driver or Vehicle not found",
+                        errorDetails: error.response.data
+                    });
+                }
+                
+                return res.status(error.response.status).json({
+                    message: "Failed to create route",
+                    errorDetails: error.response.data
+                });
+            }
+            
+            return res.status(500).json({
+                message: "Failed to create route",
+                error: error.message
+            });
+        }
+    },
+    
+    async updateRouteStatus(req: Request, res: Response) {
+    /** 
+      #swagger.tags = ['Gateway - Route Service']
+      #swagger.summary = 'Update route status'
+      #swagger.parameters['id'] = {
+        in: 'query',
+        description: 'Route ID to update',
+        required: true,
+        type: 'string'
+      }
+      #swagger.requestBody = {
+        required: true,
+        schema: {$ref: "#/components/schemas/UpdateRouteStatusSchema"}
+      }
+      #swagger.security = [{
+        "bearerAuth":[]
+      }]
+     */
+        const routeId = req.query.id as string;
+        
+        if (!routeId) {
+            return res.status(400).json({
+                message: "Route ID is required",
+                data: null
+            });
+        }
+        
+        try {
+            const statusData: UpdateRouteStatusRequest = {
+                status: req.body.status
+            };
+            
+            console.log(`Updating route ${routeId} status to: ${statusData.status}`);
+            
+            const serviceResponse = await axios.put(
+                `${ROUTE_SERVICE_URL}/routes/${routeId}/status`, 
+                statusData
+            );
+            const response = serviceResponse.data;
+            
+            return res.status(200).json({
+                message: "Route status updated successfully",
+                data: response.data
+            });
+        } catch (error: any) {
+            console.error(`Error updating route ${routeId} status:`, error.message);
+            
+            if (error.response) {
+                if (error.response.status === 404) {
+                    return res.status(404).json({
+                        message: "Route not found",
+                        errorDetails: error.response.data
+                    });
+                }
+                
+                return res.status(error.response.status).json({
+                    message: "Failed to update route status",
+                    errorDetails: error.response.data
+                });
+            }
+            
+            return res.status(500).json({
+                message: "Failed to update route status",
+                error: error.message
+            });
         }
     }
-    // Route Service Gateway Methods
 };

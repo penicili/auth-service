@@ -43,6 +43,38 @@ apiRouter.post("/driver/assign", authorizeManager, (req, res) => {
 apiRouter.delete("/driver/delete", authorizeManager, (req, res) => {
   gatewayController.deleteDriverById(req, res)
 });
-// Add any additional routes here
 
+// // Route service gateway endpoints
+apiRouter.get("/route/active", authenticateToken, (req, res) => {
+  gatewayController.getActiveRoutes(req, res);
+});
+
+apiRouter.get("/route/", (req, res) => {
+  if (req.query.id) {
+    gatewayController.getRouteById(req, res);
+  } else {
+    res.status(400).json({
+      message: "Route ID is required",
+      data: null
+    });
+  }
+});
+
+apiRouter.post("/route/create", authorizeManager, (req, res) => {
+  gatewayController.createRoute(req, res);
+});
+
+apiRouter.put("/route/status", authenticateToken, (req, res) => {
+  gatewayController.updateRouteStatus(req, res);
+});
+
+apiRouter.get("/jawa", (req,res) => {
+  res.status(200).json({
+    message: "Jawa is a fictional character from Star Wars",
+    data: {
+      name: "Jawa",
+      description: "A species of small, rodent-like humanoids native to the desert planet Tatooine."
+    }
+  });
+})
 export default apiRouter;
