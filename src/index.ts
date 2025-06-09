@@ -17,9 +17,8 @@ async function init() {
   app.use(cors());
 
   // semua route yang ada prefix /auth diarahin ke file router
-  app.use("/auth", authRouter);
   app.use("/api", apiRouter)
-  
+  app.use("/auth", authRouter);
   // tampilin ini kalau akses ke localhost:3000
   app.get("/", (req: Request, res: Response) => {
     res.status(200).json({
