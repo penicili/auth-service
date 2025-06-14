@@ -44,27 +44,20 @@ apiRouter.delete("/driver/delete", authorizeManager, (req, res) => {
   gatewayController.deleteDriverById(req, res)
 });
 
-// // Route service gateway endpoints
-apiRouter.get("/route/active", authenticateToken, (req, res) => {
+// Route service gateway endpoints - updated to match Route Service API exactly
+apiRouter.get("/routes/active", authenticateToken, (req, res) => {
   gatewayController.getActiveRoutes(req, res);
 });
 
-apiRouter.get("/route/", (req, res) => {
-  if (req.query.id) {
-    gatewayController.getRouteById(req, res);
-  } else {
-    res.status(400).json({
-      message: "Route ID is required",
-      data: null
-    });
-  }
+apiRouter.get("/routes/:id", authenticateToken, (req, res) => {
+  gatewayController.getRouteById(req, res);
 });
 
-apiRouter.post("/route/create", authorizeManager, (req, res) => {
+apiRouter.post("/routes", authorizeManager, (req, res) => {
   gatewayController.createRoute(req, res);
 });
 
-apiRouter.put("/route/status", authenticateToken, (req, res) => {
+apiRouter.put("/routes/:id/status", authenticateToken, (req, res) => {
   gatewayController.updateRouteStatus(req, res);
 });
 

@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import UserModel from "../models/user.model";
 import axios from "axios";
 import { VEHICLE_SERVICE_URL, DRIVER_SERVICE_URL, ROUTE_SERVICE_URL } from "../utils/env";
+import { formatDateForRouteService } from "../utils/formatDate";
 
 // import types untuk request body and response
 import { createVehicleRequest } from "../types/vehicleService.types";
@@ -474,16 +475,8 @@ export const gatewayController = {
             });
         }
     },
-    
-    async getRouteById(req: Request, res: Response) {
-        const routeId = req.query.id as string;
-        
-        if (!routeId) {
-            return res.status(400).json({
-                message: "Route ID is required",
-                data: null
-            });
-        }
+      async getRouteById(req: Request, res: Response) {
+        const routeId = req.params.id;
         
         try {
             console.log(`Fetching route with ID: ${routeId}`);
@@ -524,19 +517,31 @@ export const gatewayController = {
         "bearerAuth":[]
       }]
      */
-        try {
+        try {            // Validate required fields
+            const requiredFields = ['driver_id', 'vehicle_id', 'start_location', 'end_location', 'start_time'];
+            const missingFields = requiredFields.filter(field => req.body[field] === undefined);
+            
+            if (missingFields.length > 0) {
+                return res.status(400).json({
+                    message: `Missing required fields: ${missingFields.join(', ')}`,
+                    data: null
+                });
+            }
+              // Format the start_time to Y-m-d H:i:s if it's provided
+            const formattedStartTime = formatDateForRouteService(req.body.start_time);
+            
             // Extract only the fields we need for the route service
             const routeData: CreateRouteRequest = {
                 driver_id: req.body.driver_id,
                 vehicle_id: req.body.vehicle_id,
                 start_location: req.body.start_location,
                 end_location: req.body.end_location,
-                start_time: req.body.start_time,
+                start_time: formattedStartTime,
                 notes: req.body.notes
             };
+              console.log("Creating route with data:", JSON.stringify(routeData));
             
-            console.log("Creating route with data:", JSON.stringify(routeData));
-            
+            // Make the API request to the route service
             const serviceResponse = await axios.post(`${ROUTE_SERVICE_URL}/routes`, routeData);
             const response = serviceResponse.data;
             
@@ -572,12 +577,11 @@ export const gatewayController = {
     async updateRouteStatus(req: Request, res: Response) {
     /** 
       #swagger.tags = ['Gateway - Route Service']
-      #swagger.summary = 'Update route status'
-      #swagger.parameters['id'] = {
-        in: 'query',
-        description: 'Route ID to update',
+      #swagger.summary = 'Update route status'      #swagger.parameters['id'] = {
+        in: 'path',
+        description: 'Route ID',
         required: true,
-        type: 'string'
+        type: 'integer'
       }
       #swagger.requestBody = {
         required: true,
@@ -586,15 +590,7 @@ export const gatewayController = {
       #swagger.security = [{
         "bearerAuth":[]
       }]
-     */
-        const routeId = req.query.id as string;
-        
-        if (!routeId) {
-            return res.status(400).json({
-                message: "Route ID is required",
-                data: null
-            });
-        }
+     */        const routeId = req.params.id;
         
         try {
             const statusData: UpdateRouteStatusRequest = {

@@ -4,6 +4,7 @@ import authRouter from "./routes/auth";
 import bodyParser from "body-parser";
 import connectDb from "./utils/database";
 import cors from "cors";
+import docs from "./docs/route"
 
 // init function buat start server
 async function init() {
@@ -19,6 +20,7 @@ async function init() {
   // semua route yang ada prefix /auth diarahin ke file router
   app.use("/api", apiRouter)
   app.use("/auth", authRouter);
+  docs(app)
   // tampilin ini kalau akses ke localhost:3000
   app.get("/", (req: Request, res: Response) => {
     res.status(200).json({
