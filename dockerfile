@@ -2,7 +2,7 @@
 FROM node:22
 
 # set workdir
-WORKDIR /app
+WORKDIR /app/auth
 
 # copy package files
 COPY package*.json ./
@@ -20,4 +20,5 @@ COPY .env .env
 EXPOSE 3001
 
 # start app
+RUN ["npm", "run", "docs"]
 CMD ["npm", "run", "dev"]
